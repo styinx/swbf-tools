@@ -43,11 +43,15 @@ namespace swbftools
 
     void Launcher::startSWBF(int argc, char** argv)
     {
+        for(int i = 0; i < argc; ++i) {
+            const char* arg = argv[i];
+        }
+
         LPSTR executable = "C:\\Users\\Chris\\Spiele\\SWBF\\GameData\\battlefront.exe\0";
         LPSTR dir        = "C:\\Users\\Chris\\Spiele\\SWBF\\GameData\0";
-        LPSTR args       = "/win /resolution 400 600 /nointro /nostartupmusic\0";
+        LPSTR args       = "/win /resolution 800 800 /nointro /nostartupmusic\0";
         LPSTR exe_args   = "C:\\Users\\Chris\\Spiele\\SWBF\\GameData\\battlefront.exe /win "
-                           "/resolution 400 600 /nointro /nostartupmusic\0";
+                           "/resolution 800 800 /nointro /nostartupmusic\0";
 
         // set the size of the structures
         ZeroMemory(&si, sizeof(si));
@@ -63,7 +67,7 @@ namespace swbftools
 
     void Launcher::injectDLL()
     {
-        DLLInject injector{"battlefront.exe", "swbf-tools.dll"};
-        injector.run(5000);
+        DLLInject injector{"battlefront.exe", "swbf-tools.dll", 1000, 5000};
+        injector.run();
     }
 }  // namespace swbftools

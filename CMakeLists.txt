@@ -60,6 +60,7 @@ set_target_properties(minhook PROPERTIES RELEASE_POSTFIX "")
 set_target_properties(minhook PROPERTIES RELWITHDEBINFO_POSTFIX "")
 set_target_properties(minhook PROPERTIES MINSIZEREL_POSTFIX "")
 set_target_properties(minhook PROPERTIES PREFIX "lib")
+add_subdirectory(detours)
 
 # CMAKE
 

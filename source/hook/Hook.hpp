@@ -11,7 +11,12 @@ namespace hook
     class Hook final
     {
     public:
-        Hook(HMODULE module, const char* app_title, const char* executable);
+        Hook(
+            HMODULE             module,
+            const char*         app_title,
+            const char*         executable,
+            const std::uint32_t interval = 100,
+            const std::uint32_t timeout  = 0);
         ~Hook();
 
         bool                startThread();
@@ -26,11 +31,13 @@ namespace hook
         bool removeAllHooks();
 
     private:
-        HMODULE     m_module  = nullptr;
-        DX9Hook     m_dx9hook;
-        LuaHook     m_luahook;
-        const char* m_app_title;
-        const char* m_executable;
+        HMODULE       m_module = nullptr;
+        DX9Hook       m_dx9hook;
+        LuaHook       m_luahook;
+        const char*   m_app_title;
+        const char*   m_executable;
+        std::uint32_t m_interval;
+        std::uint32_t m_timeout;
 
         bool startMinHook();
         bool stopMinHook();

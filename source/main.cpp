@@ -7,10 +7,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, 
     swbftools::Launcher launcher{instance};
     launcher.showSplashScreen();
     Sleep(1000);
-    //launcher.startSWBF(__argc, __argv);
-    launcher.injectDLL();
+    launcher.startSWBF(__argc, __argv);
     launcher.hideSplashScreen();
-    Sleep(1000);
+    launcher.injectDLL();
 
     return 0;
 }

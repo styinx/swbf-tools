@@ -4,17 +4,18 @@
 
 #include <Psapi.h>
 #include <TlHelp32.h>
-
 #include <fstream>
 
 namespace hook
 {
-    Hook::Hook(HMODULE module, const char* app_title, const char* executable)
+    Hook::Hook(HMODULE module, const char* app_title, const char* executable, const std::uint32_t interval, const std::uint32_t timeout)
         : m_module(module)
         , m_dx9hook(this)
         , m_luahook(this)
         , m_app_title(app_title)
         , m_executable(executable)
+        , m_interval(interval)
+        , m_timeout(timeout)
     {
         startMinHook();
     }
@@ -74,13 +75,16 @@ namespace hook
             return false;
         }
 
-        uint32_t     interval        = 500;
-        uint32_t m_process_id = 0;
+        uint32_t m_process_id      = 0;
         uint32_t m_process_address = 0;
-        HANDLE m_process_handle = nullptr;
+        HANDLE   m_process_handle  = nullptr;
 
+        std::uint32_t timer = 0;
         while(m_process_id == 0)
         {
+            if(m_timeout > 0 && timer > m_timeout)
+                break;
+
             HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
             if(hSnap == INVALID_HANDLE_VALUE)
                 break;
@@ -92,7 +96,7 @@ namespace hook
             {
                 do
                 {
-                    std::string  proc_name = process.szExeFile;
+                    std::string proc_name = process.szExeFile;
                     if(proc_name == m_executable)
                     {
                         m_process_id = process.th32ProcessID;
@@ -102,23 +106,24 @@ namespace hook
             }
 
             CloseHandle(hSnap);
-            Sleep(interval);
+            Sleep(m_interval);
         }
         m_process_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, m_process_id);
 
-        HMODULE modules[256];
-        TCHAR   szBuf[MAX_PATH];
-        DWORD   cModules;
+        const UINT MAX_MODULES = 256;
+        HMODULE    modules[256];
+        TCHAR      szBuf[MAX_PATH];
+        DWORD      cModules;
 
-        EnumProcessModules(m_process_handle, modules, sizeof(HMODULE) * 256, &cModules);
+        EnumProcessModules(m_process_handle, modules, sizeof(HMODULE) * MAX_MODULES, &cModules);
 
         if(EnumProcessModules(m_process_handle, modules, cModules / sizeof(HMODULE), &cModules))
         {
-            for(int i = 0; i < cModules / sizeof(HMODULE); i++)
+            for(unsigned i = 0; i < cModules / sizeof(HMODULE); i++)
             {
-                if(GetModuleBaseName(m_process_handle, modules[i], szBuf, 256))
+                if(GetModuleBaseName(m_process_handle, modules[i], szBuf, MAX_MODULES))
                 {
-                    std::string  l{szBuf};
+                    std::string l{szBuf};
                     if(l == m_executable)
                     {
                         m_process_address = *reinterpret_cast<uint32_t*>(modules[i]);
@@ -135,8 +140,8 @@ namespace hook
         m_dx9hook.setWindowAndModule(window, module);
         m_dx9hook.start();
 
-        m_luahook.setProcessAddress(m_process_address);
-        m_luahook.setHooks();
+        //m_luahook.setProcessAddress(m_process_address);
+        //m_luahook.setHooks();
 
         return true;
     }
@@ -144,7 +149,7 @@ namespace hook
     bool Hook::addHook(const Address vtable, const Address replacement, const Function original)
     {
         std::fstream out("C:\\Users\\Chris\\Kruschd\\swbf-tools\\test.txt", std::ios::app);
-        auto res = MH_CreateHook(vtable, replacement, original);
+        auto         res = MH_CreateHook(vtable, replacement, original);
 
         if(res == MH_OK)
         {
