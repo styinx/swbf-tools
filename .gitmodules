@@ -1,0 +1,15 @@
+[submodule "DLLInject"]
+	path = DLLInject
+	url = https://github.com/styinx/DLLInject
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/ocornut/imgui
+[submodule "minhook"]
+	path = minhook
+	url = https://github.com/TsudaKageyu/minhook
+[submodule "lua"]
+	path = lua
+	url = https://github.com/lua/lua
+[submodule "detours"]
+	path = detours
+	url = https://github.com/microsoft/detours
