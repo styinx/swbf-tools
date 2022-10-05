@@ -54,13 +54,14 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${COMPILER_FLAGS} ${COMP
 # Dependencies
 
 add_subdirectory(DLLInject)
+add_subdirectory(detours)
+add_subdirectory(lua)
 add_subdirectory(minhook)
 set_target_properties(minhook PROPERTIES DEBUG_POSTFIX "")
 set_target_properties(minhook PROPERTIES RELEASE_POSTFIX "")
 set_target_properties(minhook PROPERTIES RELWITHDEBINFO_POSTFIX "")
 set_target_properties(minhook PROPERTIES MINSIZEREL_POSTFIX "")
 set_target_properties(minhook PROPERTIES PREFIX "lib")
-add_subdirectory(detours)
 
 # CMAKE
 
@@ -88,7 +89,7 @@ else()
             ${DIR_VCPKG_LIBRARY}/rel)
 endif()
 
-link_directories(${LIBRARY_DIRECTORIES})
+link_directories(${LIBRARY_DIRECTORIES} log.c/)
 
 
 # Sources
@@ -99,8 +100,28 @@ set(SOURCES
         source/SplashScreen.cpp)
 
 
+set(DLL_SOURCES
+        imgui/imgui.cpp
+        imgui/imgui_draw.cpp
+        imgui/imgui_tables.cpp
+        imgui/imgui_widgets.cpp
+        imgui/imgui_demo.cpp
+        imgui/backends/imgui_impl_win32.cpp
+        imgui/backends/imgui_impl_dx9.cpp
+
+        lua/ldebug.c
+
+        source/hook/Hook.cpp
+        source/hook/IMGUIWindow.cpp
+        source/hook/DX9Hook.cpp
+        source/hook/LuaHook.cpp
+        source/hook/menus/SWBFToolsMenu.cpp
+)
+
+
 # Binaries
 
+# Launcher
 add_executable(Launcher source/main.cpp ${SOURCES})
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_target_properties(Launcher PROPERTIES OUTPUT_NAME "SWBF-Tools Launcher")
@@ -109,47 +130,17 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif ()
 target_link_libraries(Launcher PRIVATE dllinject shlwapi)
 
-add_library(lua STATIC
-        lua/lgc.c
-        lua/lfunc.c
-        lua/ldo.c
-        lua/ldebug.c
-        lua/ldblib.c
-        lua/lcode.c
-        lua/lbaselib.c
-        lua/lauxlib.c
-        lua/lapi.c
-        lua/lzio.c
-        lua/lvm.c
-        lua/lundump.c
-        lua/ltm.c
-        lua/ltests.c
-        lua/lstrlib.c
-        lua/ltable.c
-        lua/lstring.c
-        lua/lstate.c
-        lua/lparser.c
-        lua/lobject.c
-        lua/lmathlib.c
-        lua/lmem.c
-        lua/liolib.c
-        lua/llex.c)
+# Demo
+add_executable(LuaSample source/demolua.cpp)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(LuaSample PROPERTIES OUTPUT_NAME "DemoLua")
+    set_target_properties(LuaSample PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
+    set_target_properties(LuaSample PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif ()
+target_link_libraries(LuaSample PRIVATE dllinject lua d3d9 d3dcompiler minhook imm32 dwmapi detours)
 
-add_library(swbf-tools SHARED
-        imgui/imgui.cpp
-        imgui/imgui_draw.cpp
-        imgui/imgui_tables.cpp
-        imgui/imgui_widgets.cpp
-        imgui/imgui_demo.cpp
-        imgui/backends/imgui_impl_win32.cpp
-        imgui/backends/imgui_impl_dx9.cpp
-        lua/ldebug.c
-        source/hook/dll.cpp
-        source/hook/Hook.cpp
-        source/hook/IMGUIWindow.cpp
-        source/hook/DX9Hook.cpp
-        source/hook/LuaHook.cpp
-        source/hook/menus/SWBFToolsMenu.cpp)
+# DLL
+add_library(swbf-tools SHARED source/hook/dll.cpp ${DLL_SOURCES})
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_target_properties(swbf-tools PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif ()

@@ -13,3 +13,6 @@
 [submodule "Detours"]
 	path = Detours
 	url = https://github.com/styinx/Detours
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/styinx/imgui

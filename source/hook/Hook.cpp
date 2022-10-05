@@ -135,31 +135,31 @@ namespace hook
 
         auto& gimgui = IMGUIWindow::getInstance();
         gimgui.setWindow(window);
+        gimgui.setAddress(m_process_address);
+        gimgui.setHandle(m_process_handle);
         IMGUIWindow::setWindowProc(window);
 
         m_dx9hook.setWindowAndModule(window, module);
         m_dx9hook.start();
 
-        //m_luahook.setProcessAddress(m_process_address);
-        //m_luahook.setHooks();
+        // m_luahook.setProcessAddress(m_process_address);
+        // m_luahook.setHooks();
 
         return true;
     }
 
     bool Hook::addHook(const Address vtable, const Address replacement, const Function original)
     {
-        std::fstream out("C:\\Users\\Chris\\Kruschd\\swbf-tools\\test.txt", std::ios::app);
         auto         res = MH_CreateHook(vtable, replacement, original);
 
         if(res == MH_OK)
         {
-            out << "ok\n";
+            
         }
         else
         {
-            out << "not ok: " << res << " " << (unsigned)vtable << "\n";
+            
         }
-        out.close();
 
         return res == MH_OK;
     }

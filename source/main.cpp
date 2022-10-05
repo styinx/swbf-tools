@@ -1,6 +1,7 @@
 #include "Launcher.hpp"
 
 #include <iostream>
+#include <cstdlib>
 
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, int shown)
 {

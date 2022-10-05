@@ -6,6 +6,7 @@
 #include "imgui.h"
 
 #include <Windows.h>
+#include <fstream>
 #include <functional>
 #include <map>
 
@@ -32,8 +33,12 @@ namespace hook
     private:
         IMGUIWindow();
 
-        bool m_ready  = false;
-        HWND m_window = nullptr;
+        bool m_ready = false;
+        bool m_shown = false;
+
+        HWND   m_window          = nullptr;
+        HANDLE m_process_handle  = nullptr;
+        std::uint32_t m_process_address = 0;
 
         static WNDPROC s_windowProcessHandler;
 
@@ -42,6 +47,8 @@ namespace hook
     public:
         static IMGUIWindow& getInstance();
         void                setWindow(HWND window);
+        void                setHandle(HANDLE handle);
+        void                setAddress(std::uint32_t address);
         void                init(IDirect3DDevice9* device);
         void                draw();
         void                addMenu(const char* name, const RenderFunction& menu);
@@ -56,8 +63,14 @@ namespace hook
 
         static LRESULT CALLBACK hookWindowProcessHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
-            if(ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam) > 0)
-                return 1L;
+            if(IMGUIWindow::getInstance().m_ready && IMGUIWindow::getInstance().m_shown)
+            {
+                ImGuiIO& io = ImGui::GetIO();
+                io.AddMouseButtonEvent(1, true);
+                ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam);
+
+                return TRUE;
+            }
 
             return CallWindowProcA(IMGUIWindow::s_windowProcessHandler, hwnd, msg, wParam, lParam);
         }

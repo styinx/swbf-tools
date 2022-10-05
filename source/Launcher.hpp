@@ -4,6 +4,7 @@
 #include "SplashScreen.hpp"
 
 #include <memory>
+#include <string>
 #include <thread>
 
 namespace swbftools
@@ -15,11 +16,15 @@ namespace swbftools
         std::shared_ptr<SplashScreen> m_splash_screen;
         bool                          m_splash_ready;
         std::thread                   m_splash_thread;
-
-        STARTUPINFO         si;
-        PROCESS_INFORMATION pi;
+        std::string                   m_swbf_path;
+        std::string                   m_dll_path;
+        CHAR                          m_cmd_arguments[512] = {0};
+        CHAR                          m_working_dir[256] = {0};
+        STARTUPINFO                   m_startup_info;
+        PROCESS_INFORMATION           m_process_info;
 
         void startSplashScreen(HINSTANCE instance);
+        void setCMDArgs(int argc, char** argv);
 
     public:
         Launcher(HINSTANCE instance);

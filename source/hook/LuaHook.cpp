@@ -17,16 +17,11 @@ extern "C"
     //originallua_call2 originallua_call_func;
 
     static bool init = false;
-    static auto outer = fopen("C:\\Users\\Chris\\Kruschd\\swbf-tools\\test.txt", "a");
-
     void __cdecl callHook(lua_State* L, lua_Debug* D)
     {
         if(D)
         {
-//            if(strlen(D->source) > 0)
-//                fprintf(outer, "Calling source: %s\n", D->source);
-//            if(strlen(D->name) > 0)
-//                fprintf(outer, "Calling name: %s\n", D->name);
+
         }
     }
 

@@ -76,7 +76,7 @@ lua_TObject o {
 
 };
 
-int main(int, char**)
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance, LPSTR cmd_line, int shown)
 {
     lua_State* L;
     L = lua_open(64);

@@ -4,6 +4,7 @@
 namespace hook
 {
     void SWBFToolsMenu();
+    void LuaMenu();
 }
 
 #endif  // SWBF_TOOLS_MENUS_HPP
