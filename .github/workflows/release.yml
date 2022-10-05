@@ -5,8 +5,8 @@ env:
   VCPKG_ROOT: '${{ github.workspace }}/vcpkg'
 
 on:
-  pull_request:
-    branches: [ "release/**" ]
+  push:
+    tags: [ "v*" ]
 
 jobs:
   build:
@@ -62,7 +62,7 @@ jobs:
       uses: vimtor/action-zip@v1
       with:
         files: SWBF-Tools-Launcher.exe swbf-tools.dll
-        dest: artifacts.zip
+        dest: SWBF-Tools.zip
 
     - name: Create Release
       id: create_release
@@ -70,8 +70,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.event.pull_request.head.ref }}
-        release_name: Release ${{ github.event.pull_request.head.ref }}
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
         draft: false
         prerelease: false
 
@@ -82,6 +82,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts.zip
-        asset_name: artifact.zip
+        asset_path: SWBF-Tools.zip
+        asset_name: SWBF-Tools.zip
         asset_content_type: application/zip
