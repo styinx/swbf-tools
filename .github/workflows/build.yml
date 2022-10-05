@@ -21,12 +21,7 @@ jobs:
         submodules: recursive
     
     - name: Get CMake
-      uses: lukka/get-cmake@latest
-
-    - name: Get vcpkg
-      uses: lukka/run-vcpkg@latest
-      with:
-        setupOnly: true
+      uses: lukka/run-cmake@v10
     
     - name: Restore artifacts
       uses: lukka/run-vcpkg@v10
