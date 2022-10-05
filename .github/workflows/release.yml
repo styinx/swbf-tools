@@ -54,6 +54,6 @@ jobs:
       with:
         name: SWBF-Tools
         path: |
-          "${{ github.workspace }}/SWBF-Tools-Launcher.exe"
-          "${{ github.workspace }}/swbf-tools.dll"
+          "${{ github.workspace }}\SWBF-Tools-Launcher.exe"
+          "${{ github.workspace }}\swbf-tools.dll"
 
