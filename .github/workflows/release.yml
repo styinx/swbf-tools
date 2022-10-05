@@ -47,10 +47,11 @@ jobs:
       run: cmake -B ${{ github.workspace }}/cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DDIR_VCPKG_ROOT:PATH="${{ env.VCPKG_ROOT }}" -DVCPKG_MANIFEST_INSTALL:PATH="${{ env.VCPKG_ROOT }}\installed\" -DVCPKG_TARGET_TRIPLET:STRING="${{ env.arch }}-windows-static" -DCMAKE_TOOLCHAIN_FILE:PATH="${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" -Wno-dev
 
     - name: Build
-      run: cmake --build ${{ github.workspace }}/cmake --config ${{ env.BUILD_TYPE }}
+      run: cmake --build ${{ github.workspace }}/cmake --config ${{ env.BUILD_TYPE }} && ls
 
     - name: Create Release Artifacts
       uses: actions/upload-artifact@v3
+      run: ls
       with:
         name: SWBF-Tools
         path: |
