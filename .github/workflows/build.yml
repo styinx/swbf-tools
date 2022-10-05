@@ -1,6 +1,7 @@
 name: Build
 
 env:
+  BUILD_TYPE: Release
   vcpkg_dir: '${{ github.workspace }}/vcpkg'
 
 on:
@@ -8,9 +9,6 @@ on:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-
-env:
-  BUILD_TYPE: Release
 
 jobs:
   build:
