@@ -23,7 +23,7 @@ jobs:
         submodules: recursive
     
     - name: Get CMake
-        uses: lukka/get-cmake@latest
+      uses: lukka/get-cmake@latest
 
     - name: Get vcpkg
       uses: lukka/run-vcpkg@latest
