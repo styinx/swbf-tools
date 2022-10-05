@@ -1,4 +1,4 @@
-name: Build
+name: Release
 
 env:
   BUILD_TYPE: Release
@@ -6,7 +6,7 @@ env:
 
 on:
   pull_request:
-    branches: [ "'release/**'" ]
+    branches: [ "release/**" ]
 
 jobs:
   build:
@@ -47,13 +47,41 @@ jobs:
       run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DDIR_VCPKG_ROOT:PATH="${{ env.VCPKG_ROOT }}" -DVCPKG_MANIFEST_INSTALL:PATH="${{ env.VCPKG_ROOT }}\installed\" -DVCPKG_TARGET_TRIPLET:STRING="${{ env.arch }}-windows-static" -DCMAKE_TOOLCHAIN_FILE:PATH="${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" -Wno-dev
 
     - name: Build
-      run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
+      run: |
+        cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
 
     - name: Create Release Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: SWBF-Tools
         path: |
-          "${{ github.workspace }}/SWBF-Tools-Launcher.exe"
-          "${{ github.workspace }}/swbf-tools.dll"
+          SWBF-Tools-Launcher.exe
+          swbf-tools.dll
 
+    - name: Zip Artifacts
+      uses: vimtor/action-zip@v1
+      with:
+        files: SWBF-Tools-Launcher.exe swbf-tools.dll
+        dest: artifacts.zip
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        release_name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts.zip
+        asset_name: artifact.zip
+        asset_content_type: application/zip

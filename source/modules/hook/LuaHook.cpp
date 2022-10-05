@@ -1,6 +1,6 @@
 #include "LuaHook.hpp"
 
-#include "hook/Hook.hpp"
+#include "modules/hook/Hook.hpp"
 
 #include <detours.h>
 #include <fstream>

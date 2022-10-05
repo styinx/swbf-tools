@@ -2,9 +2,9 @@
 #define SWBF_TOOLS_HOOK_HPP
 
 #include "MinHook.h"
-#include "hook/DX9Hook.hpp"
-#include "hook/LuaHook.hpp"
-#include "hook/types.hpp"
+#include "modules/hook/DX9Hook.hpp"
+#include "modules/hook/LuaHook.hpp"
+#include "modules/hook/types.hpp"
 
 namespace hook
 {

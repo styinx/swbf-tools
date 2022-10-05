@@ -1,7 +1,7 @@
-#include "Hook.hpp"
+#include "modules/hook/Hook.hpp"
 
-#include "hook/IMGUIWindow.hpp"
-#include "hook/menus/SWBFToolsMenu.hpp"
+#include "modules/hook/IMGUIWindow.hpp"
+#include "modules/hook/menus/SWBFToolsMenu.hpp"
 #include <fstream>
 
 hook::Hook* g_hook = nullptr;
