@@ -16,3 +16,6 @@
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/styinx/imgui
+[submodule "vcpkg"]
+	path = vcpkg
+	url = https://github.com/microsoft/vcpkg/
