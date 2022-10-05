@@ -1,14 +1,12 @@
 name: Build
 
 env:
-  BUILD_TYPE: Debug
+  BUILD_TYPE: Release
   VCPKG_ROOT: '${{ github.workspace }}/vcpkg'
 
 on:
-  push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "'release/**'" ]
 
 jobs:
   build:
@@ -49,4 +47,12 @@ jobs:
 
     - name: Build
       run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
+
+    - name: Create Release Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: SWBF-Tools
+        path: |
+          "${{ github.workspace }}/SWBF-Tools-Launcher.exe"
+          "${{ github.workspace }}/swbf-tools.dll"
 
