@@ -44,16 +44,16 @@ jobs:
         vcpkg.exe integrate install
 
     - name: Configure CMake
-      run: cmake -B ${{ github.workspace }}/cmake -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DDIR_VCPKG_ROOT:PATH="${{ env.VCPKG_ROOT }}" -DVCPKG_MANIFEST_INSTALL:PATH="${{ env.VCPKG_ROOT }}\installed\" -DVCPKG_TARGET_TRIPLET:STRING="${{ env.arch }}-windows-static" -DCMAKE_TOOLCHAIN_FILE:PATH="${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" -Wno-dev
+      run: cmake -B ${{ github.workspace }}/build -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DDIR_VCPKG_ROOT:PATH="${{ env.VCPKG_ROOT }}" -DVCPKG_MANIFEST_INSTALL:PATH="${{ env.VCPKG_ROOT }}\installed\" -DVCPKG_TARGET_TRIPLET:STRING="${{ env.arch }}-windows-static" -DCMAKE_TOOLCHAIN_FILE:PATH="${{ env.VCPKG_ROOT }}\scripts\buildsystems\vcpkg.cmake" -Wno-dev
 
     - name: Build
-      run: cmake --build ${{ github.workspace }}/cmake --config ${{ env.BUILD_TYPE }} && ls
+      run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
 
     - name: Create Release Artifacts
       uses: actions/upload-artifact@v3
       with:
         name: SWBF-Tools
         path: |
-          "${{ github.workspace }}\SWBF-Tools-Launcher.exe"
-          "${{ github.workspace }}\swbf-tools.dll"
+          SWBF-Tools-Launcher.exe
+          swbf-tools.dll
 
