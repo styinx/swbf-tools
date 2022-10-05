@@ -49,7 +49,17 @@ jobs:
     - name: Build
       run: |
         cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
-        zip artifacts SWBF-Tools-Launcher.exe swbf-tools.dll
+
+    - name: Create Release Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: SWBF-Tools
+        path: |
+          SWBF-Tools-Launcher.exe
+          swbf-tools.dll
+
+    - name: Dummy
+      run: ls
 
     - name: Create Release
       id: create_release
@@ -72,12 +82,3 @@ jobs:
         asset_path: artifacts.zip
         asset_name: artifact.zip
         asset_content_type: application/zip
-
-    - name: Create Release Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: SWBF-Tools
-        path: |
-          SWBF-Tools-Launcher.exe
-          swbf-tools.dll
-
