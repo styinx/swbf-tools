@@ -31,7 +31,8 @@ jobs:
           !${{ env.VCPKG_ROOT }}/buildtrees
           !${{ env.VCPKG_ROOT }}/packages
           !${{ env.VCPKG_ROOT }}/downloads
-          !${{ env.VCPKG_ROOT }}/installed key: |
+          !${{ env.VCPKG_ROOT }}/installed 
+        key: |
           ${{ hashFiles( 'vcpkg.json' ) }}-${{ hashFiles( '.git/modules/vcpkg/HEAD' )}}-${{ matrix.triplet }}
 
     - name: Bootstrap vcpkg
