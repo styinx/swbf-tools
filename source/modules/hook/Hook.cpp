@@ -1,6 +1,6 @@
 #include "Hook.hpp"
 
-#include "hook/IMGUIWindow.hpp"
+#include "modules/hook/IMGUIWindow.hpp"
 
 #include <Psapi.h>
 #include <TlHelp32.h>

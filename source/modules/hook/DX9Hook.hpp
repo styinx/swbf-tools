@@ -1,7 +1,7 @@
 #ifndef D3D9_HOOK_H_INCLUDED_
 #define D3D9_HOOK_H_INCLUDED_
 
-#include "hook/types.hpp"
+#include "modules/hook/types.hpp"
 
 #include <d3d9.h>
 

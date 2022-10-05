@@ -123,7 +123,7 @@ set(DLL_SOURCES
 # SWBFLauncher
 add_executable(Launcher source/applications/SWBFLauncher.cpp ${SOURCES})
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set_target_properties(Launcher PROPERTIES OUTPUT_NAME "SWBF-Tools Launcher")
+    set_target_properties(Launcher PROPERTIES OUTPUT_NAME "SWBF-Tools-Launcher")
     set_target_properties(Launcher PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
     set_target_properties(Launcher PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif ()
