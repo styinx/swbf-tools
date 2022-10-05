@@ -1,7 +1,7 @@
 #include "DX9Hook.hpp"
 
-#include "hook/Hook.hpp"
-#include "hook/IMGUIWindow.hpp"
+#include "modules/hook/Hook.hpp"
+#include "modules/hook/IMGUIWindow.hpp"
 
 namespace hook
 {
