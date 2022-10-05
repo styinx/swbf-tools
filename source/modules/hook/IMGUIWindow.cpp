@@ -6,6 +6,26 @@ namespace hook
 {
     WNDPROC IMGUIWindow::s_windowProcessHandler = nullptr;
 
+    void IMGUIWindow::setWindowProc(HWND window)
+    {
+        IMGUIWindow::s_windowProcessHandler =
+            (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (LRESULT)hookWindowProcessHandler);
+    }
+
+    LRESULT CALLBACK IMGUIWindow::hookWindowProcessHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    {
+        if(IMGUIWindow::getInstance().m_ready && IMGUIWindow::getInstance().m_shown)
+        {
+            ImGuiIO& io = ImGui::GetIO();
+            io.AddMouseButtonEvent(1, true);
+            ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam);
+
+            return TRUE;
+        }
+
+        return CallWindowProcA(IMGUIWindow::s_windowProcessHandler, hwnd, msg, wParam, lParam);
+    }
+
     IMGUIWindow::IMGUIWindow()
     {
     }

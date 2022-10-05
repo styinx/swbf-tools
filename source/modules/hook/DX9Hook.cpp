@@ -10,8 +10,8 @@ namespace hook
         IMGUIWindow::getInstance().init(device);
         IMGUIWindow::getInstance().draw();
 
-        if(originalEndScene)
-            return originalEndScene(device);
+        if(g_original_end_scene)
+            return g_original_end_scene(device);
         return TRUE;
     }
 
@@ -88,7 +88,7 @@ namespace hook
         success &= m_hook->addAndInitHook(
             reinterpret_cast<Address>(m_device_vtable[END_SCENE_VTABLE_POS]),
             reinterpret_cast<Address>(hookEndScene),
-            reinterpret_cast<Function>(&originalEndScene));
+            reinterpret_cast<Function>(&g_original_end_scene));
 
         return success;
     }

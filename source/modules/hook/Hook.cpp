@@ -8,7 +8,12 @@
 
 namespace hook
 {
-    Hook::Hook(HMODULE module, const char* app_title, const char* executable, const std::uint32_t interval, const std::uint32_t timeout)
+    Hook::Hook(
+        HMODULE             module,
+        const char*         app_title,
+        const char*         executable,
+        const std::uint32_t interval,
+        const std::uint32_t timeout)
         : m_module(module)
         , m_dx9hook(this)
         , m_luahook(this)
@@ -85,14 +90,14 @@ namespace hook
             if(m_timeout > 0 && timer > m_timeout)
                 break;
 
-            HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-            if(hSnap == INVALID_HANDLE_VALUE)
+            HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+            if(snapshot == INVALID_HANDLE_VALUE)
                 break;
 
             PROCESSENTRY32 process{};
             process.dwSize = sizeof(PROCESSENTRY32);
 
-            if(Process32First(hSnap, &process))
+            if(Process32First(snapshot, &process))
             {
                 do
                 {
@@ -102,29 +107,29 @@ namespace hook
                         m_process_id = process.th32ProcessID;
                         break;
                     }
-                } while(Process32Next(hSnap, &process));
+                } while(Process32Next(snapshot, &process));
             }
 
-            CloseHandle(hSnap);
+            CloseHandle(snapshot);
             Sleep(m_interval);
         }
         m_process_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, m_process_id);
 
         const UINT MAX_MODULES = 256;
         HMODULE    modules[256];
-        TCHAR      szBuf[MAX_PATH];
-        DWORD      cModules;
+        TCHAR      module_name[MAX_PATH];
+        DWORD      _module;
 
-        EnumProcessModules(m_process_handle, modules, sizeof(HMODULE) * MAX_MODULES, &cModules);
+        EnumProcessModules(m_process_handle, modules, sizeof(HMODULE) * MAX_MODULES, &_module);
 
-        if(EnumProcessModules(m_process_handle, modules, cModules / sizeof(HMODULE), &cModules))
+        if(EnumProcessModules(m_process_handle, modules, _module / sizeof(HMODULE), &_module))
         {
-            for(unsigned i = 0; i < cModules / sizeof(HMODULE); i++)
+            for(unsigned i = 0; i < _module / sizeof(HMODULE); i++)
             {
-                if(GetModuleBaseName(m_process_handle, modules[i], szBuf, MAX_MODULES))
+                if(GetModuleBaseName(m_process_handle, modules[i], module_name, MAX_MODULES))
                 {
-                    std::string l{szBuf};
-                    if(l == m_executable)
+                    std::string name{module_name};
+                    if(name == m_executable)
                     {
                         m_process_address = *reinterpret_cast<uint32_t*>(modules[i]);
                         break;
@@ -133,10 +138,10 @@ namespace hook
             }
         }
 
-        auto& gimgui = IMGUIWindow::getInstance();
-        gimgui.setWindow(window);
-        gimgui.setAddress(m_process_address);
-        gimgui.setHandle(m_process_handle);
+        auto& imgui = IMGUIWindow::getInstance();
+        imgui.setWindow(window);
+        imgui.setAddress(m_process_address);
+        imgui.setHandle(m_process_handle);
         IMGUIWindow::setWindowProc(window);
 
         m_dx9hook.setWindowAndModule(window, module);
@@ -150,15 +155,13 @@ namespace hook
 
     bool Hook::addHook(const Address vtable, const Address replacement, const Function original)
     {
-        auto         res = MH_CreateHook(vtable, replacement, original);
+        auto res = MH_CreateHook(vtable, replacement, original);
 
         if(res == MH_OK)
         {
-            
         }
         else
         {
-            
         }
 
         return res == MH_OK;

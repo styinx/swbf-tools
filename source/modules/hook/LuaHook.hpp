@@ -5,10 +5,10 @@
 
 extern "C"
 {
-#include "lvm.h"
 #include "ldebug.h"
-#include "lua.h"
 #include "lstate.h"
+#include "lua.h"
+#include "lvm.h"
 }
 
 namespace hook

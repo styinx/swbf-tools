@@ -15,7 +15,6 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
         g_hook->startThread();
 
         hook::IMGUIWindow::getInstance().addMenu("SWBF Tools", hook::SWBFToolsMenu);
-        hook::IMGUIWindow::getInstance().addMenu("Test", hook::LuaMenu);
 
         break;
     }

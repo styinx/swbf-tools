@@ -36,8 +36,8 @@ namespace hook
         bool m_ready = false;
         bool m_shown = false;
 
-        HWND   m_window          = nullptr;
-        HANDLE m_process_handle  = nullptr;
+        HWND          m_window          = nullptr;
+        HANDLE        m_process_handle  = nullptr;
         std::uint32_t m_process_address = 0;
 
         static WNDPROC s_windowProcessHandler;
@@ -55,25 +55,8 @@ namespace hook
         void                removeMenu(const char* name);
         void                setStyle();
 
-        static void setWindowProc(HWND window)
-        {
-            IMGUIWindow::s_windowProcessHandler =
-                (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (LRESULT)hookWindowProcessHandler);
-        }
-
-        static LRESULT CALLBACK hookWindowProcessHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-        {
-            if(IMGUIWindow::getInstance().m_ready && IMGUIWindow::getInstance().m_shown)
-            {
-                ImGuiIO& io = ImGui::GetIO();
-                io.AddMouseButtonEvent(1, true);
-                ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam);
-
-                return TRUE;
-            }
-
-            return CallWindowProcA(IMGUIWindow::s_windowProcessHandler, hwnd, msg, wParam, lParam);
-        }
+        static void             setWindowProc(HWND window);
+        static LRESULT CALLBACK hookWindowProcessHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
     };
 
 }  // namespace hook

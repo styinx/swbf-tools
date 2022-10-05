@@ -8,7 +8,7 @@
 namespace hook
 {
     typedef HRESULT(__stdcall* EndScene)(IDirect3DDevice9*);
-    static EndScene originalEndScene = nullptr;
+    static EndScene g_original_end_scene = nullptr;
     HRESULT __stdcall hookEndScene(IDirect3DDevice9* device);
     constexpr unsigned END_SCENE_VTABLE_POS = 42;
 
