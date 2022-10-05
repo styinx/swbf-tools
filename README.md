@@ -1,5 +1,7 @@
 # swbf-tools
 
+[![Build](https://github.com/styinx/swbf-tools/actions/workflows/build.yml/badge.svg)](https://github.com/styinx/swbf-tools/actions/workflows/build.yml)
+
 ## Development
 
 ### Checkout repository
