@@ -51,7 +51,6 @@ jobs:
 
     - name: Create Release Artifacts
       uses: actions/upload-artifact@v3
-      run: ls
       with:
         name: SWBF-Tools
         path: |
