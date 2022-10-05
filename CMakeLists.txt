@@ -95,9 +95,8 @@ link_directories(${LIBRARY_DIRECTORIES} log.c/)
 # Sources
 
 set(SOURCES
-        source/Launcher.cpp
-
-        source/SplashScreen.cpp)
+        source/modules/launcher/Launcher.cpp
+        source/modules/launcher/SplashScreen.cpp)
 
 
 set(DLL_SOURCES
@@ -111,18 +110,18 @@ set(DLL_SOURCES
 
         lua/ldebug.c
 
-        source/hook/Hook.cpp
-        source/hook/IMGUIWindow.cpp
-        source/hook/DX9Hook.cpp
-        source/hook/LuaHook.cpp
-        source/hook/menus/SWBFToolsMenu.cpp
+        source/modules/hook/Hook.cpp
+        source/modules/hook/IMGUIWindow.cpp
+        source/modules/hook/DX9Hook.cpp
+        source/modules/hook/LuaHook.cpp
+        source/modules/hook/menus/SWBFToolsMenu.cpp
 )
 
 
 # Binaries
 
-# Launcher
-add_executable(Launcher source/main.cpp ${SOURCES})
+# SWBFLauncher
+add_executable(Launcher source/applications/SWBFLauncher.cpp ${SOURCES})
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_target_properties(Launcher PROPERTIES OUTPUT_NAME "SWBF-Tools Launcher")
     set_target_properties(Launcher PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
@@ -130,19 +129,18 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif ()
 target_link_libraries(Launcher PRIVATE dllinject shlwapi)
 
-# Demo
-add_executable(LuaSample source/demolua.cpp)
+# SWBFToolsDLL
+add_library(swbf-tools SHARED source/applications/SWBFToolsDLL.cpp ${DLL_SOURCES})
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(swbf-tools PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif ()
+target_link_libraries(swbf-tools lua d3d9 d3dcompiler minhook imm32 dwmapi detours)
+
+# Lua Hook Demo
+add_executable(LuaSample source/applications/demos/LuaHook.cpp)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_target_properties(LuaSample PROPERTIES OUTPUT_NAME "DemoLua")
     set_target_properties(LuaSample PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
     set_target_properties(LuaSample PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif ()
 target_link_libraries(LuaSample PRIVATE dllinject lua d3d9 d3dcompiler minhook imm32 dwmapi detours)
-
-# DLL
-add_library(swbf-tools SHARED source/hook/dll.cpp ${DLL_SOURCES})
-if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set_target_properties(swbf-tools PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif ()
-target_link_libraries(swbf-tools lua d3d9 d3dcompiler minhook imm32 dwmapi detours)
-
