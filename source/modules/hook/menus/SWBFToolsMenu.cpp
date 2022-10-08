@@ -1,13 +1,19 @@
 #include "imgui.h"
 
-#include <stdio.h>
+#include <string>
 
 namespace hook
 {
-    void SWBFToolsMenu()
+    void Widget1()
     {
         ImGui::Begin("Widget 1");
         ImGui::Button("Test");
+
+        ImGui::Text("Test");
+        ImGui::SameLine();
+        std::string dat;
+        ImGui::InputText("##", dat.data(), 1);
+
         ImGui::End();
     }
 

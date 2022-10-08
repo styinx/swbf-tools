@@ -1,7 +1,10 @@
 #include "Launcher.hpp"
 
-#include "DLLInject.hpp"
 #include "SplashScreen.hpp"
+
+#include "DLLInject.hpp"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/spdlog.h"
 
 #include <cstring>
 
@@ -11,8 +14,10 @@ namespace swbftools
         : m_swbf_path("battlefront.exe")
         , m_dll_path("swbf-tools.dll")
     {
-        freopen("SWBF-Launcher.txt", "w", stdout);
-        printf("Start Launcher\n");
+        auto logger = spdlog::basic_logger_mt("log_swbf_launcher", "SWBFLauncher.log", true);
+        spdlog::set_level(spdlog::level::debug);
+
+        logger->debug("Start Launcher");
 
         m_splash_thread = std::thread(&Launcher::startSplashScreen, this, instance);
 
@@ -25,7 +30,7 @@ namespace swbftools
 
     Launcher::~Launcher()
     {
-        printf("Stop Launcher\n");
+        spdlog::get("log_swbf_launcher")->debug("Stop Launcher");
 
         if(m_splash_thread.joinable())
         {
@@ -46,7 +51,10 @@ namespace swbftools
         CHAR  space = ' ';
         CHAR* index = m_cmd_arguments;
 
-        printf("- Set CMD Args\n");
+        auto logger = spdlog::get("log_swbf_launcher");
+        if(argc > 1)
+            logger->info("Parse CMD Arguments");
+
         for(int i = 1; i < argc; ++i)
         {
             auto v = argv[i];
@@ -56,7 +64,7 @@ namespace swbftools
                 ++i;
                 strcpy(m_working_dir, argv[i]);
 
-                printf("  - Path: '%s'\n", argv[i]);
+                logger->info(" - Path: '{}'", argv[i]);
             }
 
             else if(strcmp(argv[i], "--dll") == 0)
@@ -64,7 +72,7 @@ namespace swbftools
                 ++i;
                 m_dll_path = argv[i];
 
-                printf("  - DLL: '%s'\n", argv[i]);
+                logger->info(" - DLL: '{}'", argv[i]);
             }
 
             // Must come before swbf args
@@ -78,12 +86,12 @@ namespace swbftools
                 memcpy(index, &space, 1);
                 index += 1;
 
-                printf("  - Executable: '%s'\n", argv[i]);
+                logger->info(" - Executable: '{}'", argv[i]);
             }
 
             else
             {
-                printf("  - '%s'\n", argv[i]);
+                logger->info(" - '{}'", argv[i]);
 
                 size_t len = strlen(argv[i]);
                 memcpy(index, argv[i], len);
@@ -110,7 +118,8 @@ namespace swbftools
     {
         setCMDArgs(argc, argv);
 
-        printf("- Start SWBF\n");
+        spdlog::get("log_swbf_launcher")->debug(" - Start SWBF");
+
         ZeroMemory(&m_startup_info, sizeof(m_startup_info));
         ZeroMemory(&m_process_info, sizeof(m_process_info));
 
@@ -133,8 +142,9 @@ namespace swbftools
 
     void Launcher::injectDLL()
     {
-        printf("- Inject DLL\n");
+        spdlog::get("log_swbf_launcher")->debug(" - Start Injector");
         DLLInject injector{"battlefront.exe", std::move(m_dll_path), 1000, 5000};
         injector.run();
+        spdlog::get("log_swbf_launcher")->debug(" - Finished Injector");
     }
 }  // namespace swbftools

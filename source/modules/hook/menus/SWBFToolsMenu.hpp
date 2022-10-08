@@ -3,7 +3,7 @@
 
 namespace hook
 {
-    void SWBFToolsMenu();
+    void Widget1();
     void LuaMenu();
 }
 

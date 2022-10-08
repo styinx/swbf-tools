@@ -19,3 +19,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/microsoft/vcpkg/
+[submodule "spdlog"]
+	path = spdlog
+	url = https://github.com/gabime/spdlog

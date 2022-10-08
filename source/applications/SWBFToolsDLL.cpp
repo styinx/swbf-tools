@@ -14,7 +14,7 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
         g_hook = new hook::Hook(module, "Star Wars Battlefront", "battlefront.exe");
         g_hook->startThread();
 
-        hook::IMGUIWindow::getInstance().addMenu("SWBF Tools", hook::SWBFToolsMenu);
+        hook::IMGUIWindow::getInstance().addMenu("Widget1", hook::Widget1);
 
         break;
     }

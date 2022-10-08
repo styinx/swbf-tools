@@ -107,6 +107,22 @@ namespace hook
                     ImGui::Button(menu.first);
                 }
 
+                ImGui::NewLine();
+
+                std::string dat;
+                ImGui::Text("Player Name: ");
+                ImGui::SameLine();
+                ImGui::InputText("##", dat.data(), 1);
+
+                ImGui::NewLine();
+
+                ImGui::Text("Players:");
+                ImGui::Text("  Obi Wan");
+                ImGui::Text("  Ki Adi Mundi");
+                ImGui::Text("  Kit Fisto");
+                ImGui::Text("  Plo Koon");
+                ImGui::Text("  Shaak Ti");
+
                 ImGui::End();
 
                 for(const auto& menu : m_menus)

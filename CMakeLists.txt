@@ -63,6 +63,7 @@ set_target_properties(minhook PROPERTIES RELWITHDEBINFO_POSTFIX "")
 set_target_properties(minhook PROPERTIES MINSIZEREL_POSTFIX "")
 set_target_properties(minhook PROPERTIES PREFIX "lib")
 
+
 # CMAKE
 
 set(INCLUDE_DIRECTORIES
@@ -70,6 +71,7 @@ set(INCLUDE_DIRECTORIES
         ${DIR_SOURCE}
 
         DLLInject/include/
+        DLLInject/spdlog/include/
         imgui/
         lua/
         minhook/include
