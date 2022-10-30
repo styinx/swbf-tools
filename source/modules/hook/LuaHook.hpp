@@ -6,26 +6,28 @@
 extern "C"
 {
 #include "ldebug.h"
+#include "lauxlib.h"
 #include "lstate.h"
+#include "luadebug.h"
+#include "lualib.h"
 #include "lua.h"
+#include "ldo.h"
 #include "lvm.h"
 }
 
+extern lua_State* gL;
+
 namespace hook
 {
-    class Hook;
-
     class LuaHook final
     {
     public:
-        LuaHook(Hook* hook);
+        LuaHook();
 
         void setProcessAddress(const std::uint32_t address);
         bool setHooks();
 
     private:
-        Hook* m_hook;
-
         std::uint32_t m_address;
     };
 

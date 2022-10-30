@@ -5,6 +5,7 @@
 #include <fstream>
 
 hook::Hook* g_hook = nullptr;
+
 BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
 {
     switch(reason)
@@ -12,7 +13,6 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID reserved)
     case DLL_PROCESS_ATTACH:
     {
         g_hook = new hook::Hook(module, "Star Wars Battlefront", "battlefront.exe");
-        g_hook->startThread();
 
         hook::IMGUIWindow::getInstance().addMenu("Widget1", hook::Widget1);
 

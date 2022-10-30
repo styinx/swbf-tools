@@ -3,21 +3,32 @@
 #include "modules/hook/Hook.hpp"
 #include "modules/hook/IMGUIWindow.hpp"
 
+#include "detours.h"
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/spdlog.h"
+
 namespace hook
 {
-    HRESULT __stdcall hookEndScene(IDirect3DDevice9* device)
+    using func_endScene = HRESULT __stdcall (IDirect3DDevice9*);
+    func_endScene* orig_endScene;
+    constexpr unsigned END_SCENE_VTABLE_POS = 42;
+
+    HRESULT __stdcall hook_endScene(IDirect3DDevice9* device)
     {
         IMGUIWindow::getInstance().init(device);
         IMGUIWindow::getInstance().draw();
 
-        if(g_original_end_scene)
-            return g_original_end_scene(device);
+        if(orig_endScene)
+            return orig_endScene(device);
         return TRUE;
     }
 
-    DX9Hook::DX9Hook(Hook* hook)
-        : m_hook(hook)
+    DX9Hook::DX9Hook()
+        : m_address(0)
     {
+        auto logger = spdlog::basic_logger_mt(__FILE__, "DX9Hook.log", true);
+        spdlog::set_level(spdlog::level::debug);
+        logger->debug("Start DX9hook");
     }
 
     DX9Hook::~DX9Hook()
@@ -42,6 +53,11 @@ namespace hook
     {
         m_target_window = window;
         m_target_module = module;
+    }
+
+    void DX9Hook::setProcessAddress(const std::uint32_t address)
+    {
+        m_address = address;
     }
 
     IDirect3DDevice9* DX9Hook::getDevice()
@@ -76,19 +92,32 @@ namespace hook
             &d3dpp,
             &m_device);
 
-        m_device_vtable = reinterpret_cast<Address>(m_device);
-        m_device_vtable = reinterpret_cast<Address>(m_device_vtable[0]);
+        m_device_vtable = reinterpret_cast<DWORD*>(m_device);
+        m_device_vtable = reinterpret_cast<DWORD*>(m_device_vtable[0]);
         return true;  // todo
     }
 
     bool DX9Hook::addHooks()
     {
+        auto logger = spdlog::get(__FILE__);
+        logger->debug("Set Hooks");
+
         bool success = true;
 
-        success &= m_hook->addAndInitHook(
-            reinterpret_cast<Address>(m_device_vtable[END_SCENE_VTABLE_POS]),
-            reinterpret_cast<Address>(hookEndScene),
-            reinterpret_cast<Function>(&g_original_end_scene));
+        if(DetourTransactionBegin() == NO_ERROR)
+        {
+            logger->debug("Attempt hooking endScene");
+            orig_endScene = reinterpret_cast<func_endScene*>((DWORD)(m_device_vtable[END_SCENE_VTABLE_POS]));
+            if(DetourAttach(&reinterpret_cast<PVOID&>(orig_endScene), &hook_endScene) == NO_ERROR)
+            {
+                logger->debug("Found");
+                if(DetourTransactionCommit() == NO_ERROR)
+                {
+                    logger->debug("Done");
+                    success = true;
+                }
+            }
+        }
 
         return success;
     }
@@ -97,7 +126,7 @@ namespace hook
     {
         bool success = true;
 
-        success &= m_hook->removeHook(reinterpret_cast<Address>(m_device_vtable[END_SCENE_VTABLE_POS]));
+        //success &= m_hook->removeHook(reinterpret_cast<Address>(m_device_vtable[END_SCENE_VTABLE_POS]));
 
         return success;
     }

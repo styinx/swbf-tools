@@ -56,12 +56,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${COMPILER_FLAGS} ${COMP
 add_subdirectory(DLLInject)
 add_subdirectory(detours)
 add_subdirectory(lua)
-add_subdirectory(minhook)
-set_target_properties(minhook PROPERTIES DEBUG_POSTFIX "")
-set_target_properties(minhook PROPERTIES RELEASE_POSTFIX "")
-set_target_properties(minhook PROPERTIES RELWITHDEBINFO_POSTFIX "")
-set_target_properties(minhook PROPERTIES MINSIZEREL_POSTFIX "")
-set_target_properties(minhook PROPERTIES PREFIX "lib")
 
 
 # CMAKE
@@ -74,7 +68,6 @@ set(INCLUDE_DIRECTORIES
         DLLInject/spdlog/include/
         imgui/
         lua/
-        minhook/include
         detours/src
 
         ${DIR_VCPKG_INCLUDE})
@@ -136,7 +129,7 @@ add_library(swbf-tools SHARED source/applications/SWBFToolsDLL.cpp ${DLL_SOURCES
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_target_properties(swbf-tools PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif ()
-target_link_libraries(swbf-tools lua d3d9 d3dcompiler minhook imm32 dwmapi detours)
+target_link_libraries(swbf-tools lua d3d9 d3dcompiler imm32 dwmapi detours)
 
 # Lua Hook Demo
 add_executable(LuaSample source/applications/demos/LuaHook.cpp)
@@ -145,4 +138,13 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_target_properties(LuaSample PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
     set_target_properties(LuaSample PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif ()
-target_link_libraries(LuaSample PRIVATE dllinject lua d3d9 d3dcompiler minhook imm32 dwmapi detours)
+target_link_libraries(LuaSample PRIVATE dllinject lua d3d9 d3dcompiler imm32 dwmapi detours)
+
+# Lua Bridge
+add_executable(LuaBridge source/applications/demos/LuaBridge.cpp)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(LuaSample PROPERTIES OUTPUT_NAME "DemoBridge")
+    set_target_properties(LuaSample PROPERTIES LINK_FLAGS /SUBSYSTEM:WINDOWS)
+    set_target_properties(LuaSample PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif ()
+target_link_libraries(LuaBridge PRIVATE lua)

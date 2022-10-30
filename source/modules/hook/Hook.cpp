@@ -2,9 +2,14 @@
 
 #include "modules/hook/IMGUIWindow.hpp"
 
+#include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/spdlog.h"
+
 #include <Psapi.h>
 #include <TlHelp32.h>
+#include <chrono>
 #include <fstream>
+#include <thread>
 
 namespace hook
 {
@@ -14,36 +19,41 @@ namespace hook
         const char*         executable,
         const std::uint32_t interval,
         const std::uint32_t timeout)
-        : m_module(module)
-        , m_dx9hook(this)
-        , m_luahook(this)
+        : m_interval(interval)
+        , m_timeout(timeout)
+        , m_process_id(0)
+        , m_process_address(0)
+        , m_running(true)
+        , m_process_handle(nullptr)
+        , m_module(module)
+        , m_dx9hook()
+        , m_luahook()
         , m_app_title(app_title)
         , m_executable(executable)
-        , m_interval(interval)
-        , m_timeout(timeout)
     {
-        startMinHook();
+        auto logger = spdlog::basic_logger_mt("log_hook", "Hook.log", true);
+        spdlog::set_level(spdlog::level::debug);
+        logger->debug("Start hook");
+
+        startThread();
     }
 
     Hook::~Hook()
     {
-        removeAllHooks();
-        stopMinHook();
+
     }
 
     // Private
 
-    bool Hook::startMinHook()
+    DWORD WINAPI Hook::runThread(LPVOID hook)
     {
-        return MH_Initialize() == MH_OK;
+        if(hook)
+        {
+            auto* hook_instance = reinterpret_cast<Hook*>(hook);
+            return hook_instance->run();
+        }
+        return FALSE;
     }
-
-    bool Hook::stopMinHook()
-    {
-        return MH_Uninitialize() == MH_OK;
-    }
-
-    // Public
 
     bool Hook::startThread()
     {
@@ -54,16 +64,6 @@ namespace hook
             return true;
         }
         return false;
-    }
-
-    DWORD WINAPI Hook::runThread(LPVOID hook)
-    {
-        if(hook)
-        {
-            auto* hook_instance = reinterpret_cast<Hook*>(hook);
-            return hook_instance->run();
-        }
-        return FALSE;
     }
 
     bool Hook::run()
@@ -80,10 +80,35 @@ namespace hook
             return false;
         }
 
-        uint32_t m_process_id      = 0;
-        uint32_t m_process_address = 0;
-        HANDLE   m_process_handle  = nullptr;
+        if(findProcessID())
+        {
+            if(findProcessAddress())
+            {
+                auto& imgui = IMGUIWindow::getInstance();
+                imgui.setWindow(window);
+                imgui.setAddress(m_process_address);
+                imgui.setHandle(m_process_handle);
+                IMGUIWindow::setWindowProc(window);
 
+                m_luahook.setProcessAddress(m_process_address);
+                m_luahook.setHooks();
+
+                m_dx9hook.setProcessAddress(m_process_address);
+                m_dx9hook.setWindowAndModule(window, module);
+                m_dx9hook.start();
+            }
+        }
+
+        while(m_running)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        return true;
+    }
+
+    bool Hook::findProcessID()
+    {
         std::uint32_t timer = 0;
         while(m_process_id == 0)
         {
@@ -113,6 +138,13 @@ namespace hook
             CloseHandle(snapshot);
             Sleep(m_interval);
         }
+        spdlog::get("log_hook")->debug("Found pid: {}", m_process_id);
+
+        return m_process_id != 0;
+    }
+
+    bool Hook::findProcessAddress()
+    {
         m_process_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, m_process_id);
 
         const UINT MAX_MODULES = 256;
@@ -131,64 +163,15 @@ namespace hook
                     std::string name{module_name};
                     if(name == m_executable)
                     {
-                        m_process_address = *reinterpret_cast<uint32_t*>(modules[i]);
+                        m_process_address = (DWORD)(modules[i]);
                         break;
                     }
                 }
             }
         }
 
-        auto& imgui = IMGUIWindow::getInstance();
-        imgui.setWindow(window);
-        imgui.setAddress(m_process_address);
-        imgui.setHandle(m_process_handle);
-        IMGUIWindow::setWindowProc(window);
+        spdlog::get("log_hook")->debug("A Found address: {:x}", m_process_address);
 
-        m_dx9hook.setWindowAndModule(window, module);
-        m_dx9hook.start();
-
-        // m_luahook.setProcessAddress(m_process_address);
-        // m_luahook.setHooks();
-
-        return true;
-    }
-
-    bool Hook::addHook(const Address vtable, const Address replacement, const Function original)
-    {
-        auto res = MH_CreateHook(vtable, replacement, original);
-
-        if(res == MH_OK)
-        {
-        }
-        else
-        {
-        }
-
-        return res == MH_OK;
-    }
-
-    bool Hook::enableHook(const Address vtable)
-    {
-        return MH_EnableHook(vtable) == MH_OK;
-    }
-
-    bool Hook::enableAllHooks()
-    {
-        return MH_EnableHook(MH_ALL_HOOKS) == MH_OK;
-    }
-
-    bool Hook::addAndInitHook(const Address vtable, const Address replacement, const Function original)
-    {
-        return addHook(vtable, replacement, original) && enableHook(vtable);
-    }
-
-    bool Hook::removeHook(const Address vtable)
-    {
-        return MH_DisableHook(vtable) == MH_OK;
-    }
-
-    bool Hook::removeAllHooks()
-    {
-        return MH_DisableHook(MH_ALL_HOOKS) == MH_OK;
+        return m_process_address != 0;
     }
 }  // namespace hook

@@ -4,9 +4,6 @@
 [submodule "log.c"]
 	path = log.c
 	url = https://github.com/styinx/log.c
-[submodule "minhook"]
-	path = minhook
-	url = https://github.com/styinx/minhook
 [submodule "lua"]
 	path = lua
 	url = https://github.com/styinx/lua
@@ -22,3 +19,4 @@
 [submodule "spdlog"]
 	path = spdlog
 	url = https://github.com/gabime/spdlog
+
