@@ -15,11 +15,11 @@
 
 namespace hook
 {
-    lua_State*      g_L              = nullptr;
-    func_luaD_call* g_orig_luaD_call = nullptr;
-    func_luaD_call* g_hook_luaD_call = nullptr;
-    func_endScene*  g_orig_endScene  = nullptr;
-    func_endScene*  g_hook_endScene  = nullptr;
+    lua_State*      g_L              ;
+    func_luaD_call* g_orig_luaD_call;
+    func_luaD_call* g_hook_luaD_call;
+    func_endScene*  g_orig_endScene;
+    func_endScene*  g_hook_endScene;
 
     void call_hook_func(lua_State* L, lua_Debug* ar)
     {
@@ -48,8 +48,6 @@ namespace hook
 
     HRESULT __stdcall hook_endScene(IDirect3DDevice9* device)
     {
-        spdlog::get(__FILE__)->debug("Draw");
-
         IMGUIWindow::getInstance().init(device);
         IMGUIWindow::getInstance().draw();
 
@@ -227,7 +225,7 @@ namespace hook
             g_hook_luaD_call  = hook_luaD_call;
 
             logger->debug("Attempt hooking luaD call at address 0x{:x}", luaD_call_address);
-            if(DetourAttach(&reinterpret_cast<PVOID&>(g_orig_luaD_call), &g_hook_luaD_call) == NO_ERROR)
+            if(DetourAttach(&reinterpret_cast<PVOID&>(g_orig_luaD_call), g_hook_luaD_call) == NO_ERROR)
             {
                 logger->debug("Found");
                 if(DetourTransactionCommit() == NO_ERROR)
@@ -283,7 +281,7 @@ namespace hook
             g_hook_endScene   = hook_endScene;
 
             logger->debug("Attempt hooking endScene at address 0x{:x}", end_scene_address);
-            if(DetourAttach(&reinterpret_cast<PVOID&>(g_orig_endScene), &g_hook_endScene) == NO_ERROR)
+            if(DetourAttach(&reinterpret_cast<PVOID&>(g_orig_endScene), g_hook_endScene) == NO_ERROR)
             {
                 logger->debug("Found");
                 if(DetourTransactionCommit() == NO_ERROR)

@@ -22,7 +22,7 @@ namespace hook
     using func_luaD_call                         = void(lua_State*, StkId, int);
     using func_endScene                          = HRESULT __stdcall(IDirect3DDevice9*);
     constexpr std::uint32_t LUAD_CALL_ADDRESS    = 0x00226320;
-    constexpr std::uint32_t END_SCENE_VTABLE_POS = 42;
+    constexpr unsigned      END_SCENE_VTABLE_POS = 42;
 
     class Hook final
     {
