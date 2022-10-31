@@ -27,12 +27,6 @@ namespace hook
     class Hook final
     {
     public:
-        static lua_State*      s_L;
-        static func_luaD_call* s_orig_luaD_call;
-        static func_luaD_call* s_hook_luaD_call;
-        static func_endScene*  s_orig_endScene;
-        static func_endScene*  s_hook_endScene;
-
         Hook(
             HMODULE             module,
             const char*         app_title,

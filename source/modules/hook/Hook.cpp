@@ -15,11 +15,11 @@
 
 namespace hook
 {
-    lua_State*      Hook::s_L              = nullptr;
-    func_luaD_call* Hook::s_orig_luaD_call = nullptr;
-    func_luaD_call* Hook::s_hook_luaD_call = nullptr;
-    func_endScene*  Hook::s_orig_endScene  = nullptr;
-    func_endScene*  Hook::s_hook_endScene  = nullptr;
+    lua_State*      g_L              = nullptr;
+    func_luaD_call* g_orig_luaD_call = nullptr;
+    func_luaD_call* g_hook_luaD_call = nullptr;
+    func_endScene*  g_orig_endScene  = nullptr;
+    func_endScene*  g_hook_endScene  = nullptr;
 
     void call_hook_func(lua_State* L, lua_Debug* ar)
     {
@@ -31,7 +31,7 @@ namespace hook
     {
         auto logger = spdlog::get(__FILE__);
         logger->debug("Call hook_luaD_call");
-        Hook::s_L = L;
+        g_L = L;
 
         // logger->debug("set hook");
         // lua_setcallhook(L, call_hook_func);
@@ -39,20 +39,22 @@ namespace hook
         // Detach the hook once we get the lua state.
         DetourTransactionBegin();
         DetourUpdateThread(GetCurrentThread());
-        DetourDetach(&Hook::s_orig_luaD_call, Hook::s_hook_luaD_call);
+        DetourDetach(&g_orig_luaD_call, g_hook_luaD_call);
         DetourTransactionCommit();
 
-        if(Hook::s_orig_luaD_call)
-            Hook::s_orig_luaD_call(L, func, nResults);
+        if(g_orig_luaD_call)
+            g_orig_luaD_call(L, func, nResults);
     }
 
     HRESULT __stdcall hook_endScene(IDirect3DDevice9* device)
     {
+        spdlog::get(__FILE__)->debug("Draw");
+
         IMGUIWindow::getInstance().init(device);
         IMGUIWindow::getInstance().draw();
 
-        if(Hook::s_orig_endScene)
-            return Hook::s_orig_endScene(device);
+        if(g_orig_endScene)
+            return g_orig_endScene(device);
         return TRUE;
     }
 
@@ -127,8 +129,11 @@ namespace hook
                 imgui.setWindow(m_window);
                 IMGUIWindow::setWindowProc(m_window);
 
-                hookLua();
-                hookDX9();
+                bool success = true;
+                success &= hookLua();
+                success &= hookDX9();
+
+                spdlog::get(__FILE__)->debug("Adding hooks was {}", success ? "successful" : "not sucessful");
             }
         }
 
@@ -171,7 +176,7 @@ namespace hook
             CloseHandle(snapshot);
             Sleep(m_interval);
         }
-        spdlog::get(__FILE__)->debug("Found pid: {}", m_process_id);
+        spdlog::get(__FILE__)->debug("Found PID: {}", m_process_id);
 
         return m_process_id != 0;
     }
@@ -203,7 +208,7 @@ namespace hook
             }
         }
 
-        spdlog::get(__FILE__)->debug("A Found address: {:x}", m_process_address);
+        spdlog::get(__FILE__)->debug("Found base address: 0x{:x}", m_process_address);
 
         return m_process_address != 0;
     }
@@ -217,13 +222,12 @@ namespace hook
 
         if(DetourTransactionBegin() == NO_ERROR)
         {
-            logger->debug("Attempt hooking luaD call ");
             DWORD luaD_call_address = m_process_address + LUAD_CALL_ADDRESS;
-            Hook::s_orig_luaD_call  = reinterpret_cast<func_luaD_call*>(luaD_call_address);
-            Hook::s_hook_luaD_call  = hook_luaD_call;
+            g_orig_luaD_call  = reinterpret_cast<func_luaD_call*>(luaD_call_address);
+            g_hook_luaD_call  = hook_luaD_call;
 
-            if(DetourAttach(&reinterpret_cast<PVOID&>(Hook::s_orig_luaD_call), &Hook::s_hook_luaD_call) ==
-               NO_ERROR)
+            logger->debug("Attempt hooking luaD call at address 0x{:x}", luaD_call_address);
+            if(DetourAttach(&reinterpret_cast<PVOID&>(g_orig_luaD_call), &g_hook_luaD_call) == NO_ERROR)
             {
                 logger->debug("Found");
                 if(DetourTransactionCommit() == NO_ERROR)
@@ -270,17 +274,16 @@ namespace hook
         device_vtable = reinterpret_cast<DWORD*>(device);
         device_vtable = reinterpret_cast<DWORD*>(device_vtable[0]);
 
-        bool success = true;
+        bool success = false;
 
         if(DetourTransactionBegin() == NO_ERROR)
         {
-            logger->debug("Attempt hooking endScene");
             DWORD end_scene_address = (DWORD)(device_vtable[END_SCENE_VTABLE_POS]);
-            Hook::s_orig_endScene   = reinterpret_cast<func_endScene*>(end_scene_address);
-            Hook::s_hook_endScene   = hook_endScene;
+            g_orig_endScene   = reinterpret_cast<func_endScene*>(end_scene_address);
+            g_hook_endScene   = hook_endScene;
 
-            if(DetourAttach(&reinterpret_cast<PVOID&>(Hook::s_orig_endScene), &Hook::s_hook_endScene) ==
-               NO_ERROR)
+            logger->debug("Attempt hooking endScene at address 0x{:x}", end_scene_address);
+            if(DetourAttach(&reinterpret_cast<PVOID&>(g_orig_endScene), &g_hook_endScene) == NO_ERROR)
             {
                 logger->debug("Found");
                 if(DetourTransactionCommit() == NO_ERROR)
