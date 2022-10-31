@@ -107,8 +107,6 @@ set(DLL_SOURCES
 
         source/modules/hook/Hook.cpp
         source/modules/hook/IMGUIWindow.cpp
-        source/modules/hook/DX9Hook.cpp
-        source/modules/hook/LuaHook.cpp
         source/modules/hook/menus/SWBFToolsMenu.cpp
 )
 
