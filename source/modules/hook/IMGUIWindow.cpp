@@ -41,16 +41,6 @@ namespace hook
         m_window = window;
     }
 
-    void IMGUIWindow::setHandle(HANDLE handle)
-    {
-        m_process_handle = handle;
-    }
-
-    void IMGUIWindow::setAddress(std::uint32_t address)
-    {
-        m_process_address = address;
-    }
-
     void IMGUIWindow::init(IDirect3DDevice9* device)
     {
         if(!m_ready && m_window)

@@ -37,8 +37,6 @@ namespace hook
         bool m_shown = false;
 
         HWND          m_window          = nullptr;
-        HANDLE        m_process_handle  = nullptr;
-        std::uint32_t m_process_address = 0;
 
         static WNDPROC s_windowProcessHandler;
 
@@ -47,8 +45,6 @@ namespace hook
     public:
         static IMGUIWindow& getInstance();
         void                setWindow(HWND window);
-        void                setHandle(HANDLE handle);
-        void                setAddress(std::uint32_t address);
         void                init(IDirect3DDevice9* device);
         void                draw();
         void                addMenu(const char* name, const RenderFunction& menu);

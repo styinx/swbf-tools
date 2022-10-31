@@ -2,17 +2,60 @@
 
 #include "modules/hook/IMGUIWindow.hpp"
 
+#include "detours.h"
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/spdlog.h"
 
 #include <Psapi.h>
 #include <TlHelp32.h>
 #include <chrono>
+
 #include <fstream>
 #include <thread>
 
 namespace hook
 {
+    lua_State*      Hook::s_L              = nullptr;
+    func_luaD_call* Hook::s_orig_luaD_call = nullptr;
+    func_luaD_call* Hook::s_hook_luaD_call = nullptr;
+    func_endScene*  Hook::s_orig_endScene  = nullptr;
+    func_endScene*  Hook::s_hook_endScene  = nullptr;
+
+    void call_hook_func(lua_State* L, lua_Debug* ar)
+    {
+        auto logger = spdlog::get(__FILE__);
+        logger->debug("{:>10}: {:>10} ({:>10}) {:>10}", ar->event, ar->currentline, ar->linedefined, ar->nups);
+    }
+
+    void hook_luaD_call(lua_State* L, StkId func, int nResults)
+    {
+        auto logger = spdlog::get(__FILE__);
+        logger->debug("Call hook_luaD_call");
+        Hook::s_L = L;
+
+        // logger->debug("set hook");
+        // lua_setcallhook(L, call_hook_func);
+
+        // Detach the hook once we get the lua state.
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+        DetourDetach(&Hook::s_orig_luaD_call, Hook::s_hook_luaD_call);
+        DetourTransactionCommit();
+
+        if(Hook::s_orig_luaD_call)
+            Hook::s_orig_luaD_call(L, func, nResults);
+    }
+
+    HRESULT __stdcall hook_endScene(IDirect3DDevice9* device)
+    {
+        IMGUIWindow::getInstance().init(device);
+        IMGUIWindow::getInstance().draw();
+
+        if(Hook::s_orig_endScene)
+            return Hook::s_orig_endScene(device);
+        return TRUE;
+    }
+
     Hook::Hook(
         HMODULE             module,
         const char*         app_title,
@@ -26,12 +69,10 @@ namespace hook
         , m_running(true)
         , m_process_handle(nullptr)
         , m_module(module)
-        , m_dx9hook()
-        , m_luahook()
         , m_app_title(app_title)
         , m_executable(executable)
     {
-        auto logger = spdlog::basic_logger_mt("log_hook", "Hook.log", true);
+        auto logger = spdlog::basic_logger_mt(__FILE__, "Hook.log", true);
         spdlog::set_level(spdlog::level::debug);
         logger->debug("Start hook");
 
@@ -40,7 +81,6 @@ namespace hook
 
     Hook::~Hook()
     {
-
     }
 
     // Private
@@ -68,14 +108,13 @@ namespace hook
 
     bool Hook::run()
     {
-        auto module = reinterpret_cast<HMODULE>(m_module);
-        if(!module)
+        if(!m_module)
         {
             return false;
         }
 
-        auto window = reinterpret_cast<HWND>(FindWindow(nullptr, m_app_title));
-        if(!window)
+        m_window = reinterpret_cast<HWND>(FindWindow(nullptr, m_app_title));
+        if(!m_window)
         {
             return false;
         }
@@ -85,17 +124,11 @@ namespace hook
             if(findProcessAddress())
             {
                 auto& imgui = IMGUIWindow::getInstance();
-                imgui.setWindow(window);
-                imgui.setAddress(m_process_address);
-                imgui.setHandle(m_process_handle);
-                IMGUIWindow::setWindowProc(window);
+                imgui.setWindow(m_window);
+                IMGUIWindow::setWindowProc(m_window);
 
-                m_luahook.setProcessAddress(m_process_address);
-                m_luahook.setHooks();
-
-                m_dx9hook.setProcessAddress(m_process_address);
-                m_dx9hook.setWindowAndModule(window, module);
-                m_dx9hook.start();
+                hookLua();
+                hookDX9();
             }
         }
 
@@ -138,7 +171,7 @@ namespace hook
             CloseHandle(snapshot);
             Sleep(m_interval);
         }
-        spdlog::get("log_hook")->debug("Found pid: {}", m_process_id);
+        spdlog::get(__FILE__)->debug("Found pid: {}", m_process_id);
 
         return m_process_id != 0;
     }
@@ -170,8 +203,95 @@ namespace hook
             }
         }
 
-        spdlog::get("log_hook")->debug("A Found address: {:x}", m_process_address);
+        spdlog::get(__FILE__)->debug("A Found address: {:x}", m_process_address);
 
         return m_process_address != 0;
     }
+
+    bool Hook::hookLua()
+    {
+        auto logger = spdlog::get(__FILE__);
+        logger->debug("Set Hooks");
+
+        bool success = false;
+
+        if(DetourTransactionBegin() == NO_ERROR)
+        {
+            logger->debug("Attempt hooking luaD call ");
+            DWORD luaD_call_address = m_process_address + LUAD_CALL_ADDRESS;
+            Hook::s_orig_luaD_call  = reinterpret_cast<func_luaD_call*>(luaD_call_address);
+            Hook::s_hook_luaD_call  = hook_luaD_call;
+
+            if(DetourAttach(&reinterpret_cast<PVOID&>(Hook::s_orig_luaD_call), &Hook::s_hook_luaD_call) ==
+               NO_ERROR)
+            {
+                logger->debug("Found");
+                if(DetourTransactionCommit() == NO_ERROR)
+                {
+                    logger->debug("Done");
+                    success = true;
+                }
+            }
+        }
+
+        return success;
+    }
+
+    bool Hook::hookDX9()
+    {
+        auto logger = spdlog::get(__FILE__);
+        logger->debug("Set Hooks");
+
+        auto windowed = ((GetWindowLongPtr(m_window, GWL_STYLE) & WS_POPUP) != 0) ? FALSE : TRUE;
+
+        D3DPRESENT_PARAMETERS d3dpp         = D3DPRESENT_PARAMETERS{};
+        IDirect3D9*           d3d           = Direct3DCreate9(D3D_SDK_VERSION);
+        IDirect3DDevice9*     device        = nullptr;
+        DWORD*                device_vtable = nullptr;
+
+        ZeroMemory(&d3dpp, sizeof(d3dpp));
+        d3dpp.BackBufferCount            = 1;
+        d3dpp.MultiSampleType            = D3DMULTISAMPLE_NONE;
+        d3dpp.SwapEffect                 = D3DSWAPEFFECT_DISCARD;
+        d3dpp.hDeviceWindow              = m_window;
+        d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
+        d3dpp.PresentationInterval       = D3DPRESENT_INTERVAL_IMMEDIATE;
+        d3dpp.BackBufferFormat           = D3DFMT_UNKNOWN;
+        d3dpp.Windowed                   = windowed;
+
+        d3d->CreateDevice(
+            D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL,
+            m_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING,
+            &d3dpp,
+            &device);
+
+        device_vtable = reinterpret_cast<DWORD*>(device);
+        device_vtable = reinterpret_cast<DWORD*>(device_vtable[0]);
+
+        bool success = true;
+
+        if(DetourTransactionBegin() == NO_ERROR)
+        {
+            logger->debug("Attempt hooking endScene");
+            DWORD end_scene_address = (DWORD)(device_vtable[END_SCENE_VTABLE_POS]);
+            Hook::s_orig_endScene   = reinterpret_cast<func_endScene*>(end_scene_address);
+            Hook::s_hook_endScene   = hook_endScene;
+
+            if(DetourAttach(&reinterpret_cast<PVOID&>(Hook::s_orig_endScene), &Hook::s_hook_endScene) ==
+               NO_ERROR)
+            {
+                logger->debug("Found");
+                if(DetourTransactionCommit() == NO_ERROR)
+                {
+                    logger->debug("Done");
+                    success = true;
+                }
+            }
+        }
+
+        return success;
+    }
+
 }  // namespace hook
